@@ -9,6 +9,7 @@ angular.module('angular-table', [])
             compile: function (tElement, tAttrs) {
                 SortState.sortExpression = tAttrs.defaultSortColumn;
                 TemplateStaticState.instrumentationEnabled = tAttrs.instrumentationEnabled;
+                TemplateStaticState.modelName = tAttrs.model;
 
                 // find whatever classes were passed into the angular-table, and merge them with the built in classes for the container div
                 tElement.addClass('angularTableContainer');
@@ -18,7 +19,7 @@ angular.module('angular-table', [])
                 tElement.replaceWith(rowTemplate);
 
                 // return linking function
-                return function(scope) {
+                return function(scope, elem, attrs) {
                     scope.parent = scope.$parent;
                 };
             },
@@ -68,13 +69,16 @@ angular.module('angular-table', [])
         };
     }])
     .directive('row', ['ManualCompiler', 'ResizeHeightEvent', '$window', 'Debounce', 'TemplateStaticState', 'RowState', 'SortState',
-        'ScrollingContainerHeightState', 'JqLiteExtension', 'Instrumentation', 'ResizeWidthEvent', '$compile',
+        'ScrollingContainerHeightState', 'JqLiteExtension', 'Instrumentation', 'ResizeWidthEvent', '$compile', '$log', '$timeout',
         function(ManualCompiler, ResizeHeightEvent, $window, Debounce, TemplateStaticState, RowState, SortState, ScrollingContainerHeightState,
-            JqLiteExtension, Instrumentation, ResizeWidthEvent, $compile) {
+            JqLiteExtension, Instrumentation, ResizeWidthEvent, $compile, $log, $timeout) {
         return {
             // only support elements for now to simplify the manual transclusion and replace logic.
             restrict: 'E',
             controller: ['$scope', function($scope) {
+
+              $log.info("row controller function");
+
                 $scope.sortExpression = SortState.sortExpression;
 
                 $scope.handleClick = function(row, parentScopeClickHandler, selectedRowBackgroundColor) {
@@ -111,6 +115,8 @@ angular.module('angular-table', [])
                 RowState.rowSelectedBackgroundColor = tAttrs.selectedColor;
 
                 ManualCompiler.compileRow(tElement, tAttrs, false);
+
+                $log.info('compiled the row directive');
 
                 // return a linking function
                 return function(scope, iElement) {
@@ -173,6 +179,8 @@ angular.module('angular-table', [])
                         ResizeHeightEvent.fireTrigger = !ResizeHeightEvent.fireTrigger;
                         ResizeWidthEvent.fireTrigger = !ResizeWidthEvent.fireTrigger;
                     }, true);
+
+
                 };
             }
         };
@@ -239,7 +247,7 @@ angular.module('angular-table', [])
         return self;
     }])
 
-    .service('ManualCompiler', ['TemplateStaticState', function(TemplateStaticState) {
+    .service('ManualCompiler', ['TemplateStaticState', '$log', function(TemplateStaticState, $log) {
         var self = this;
 
         self.compileRow = function(tElement, tAttrs, isHeader) {
@@ -316,13 +324,14 @@ angular.module('angular-table', [])
 
                 // add the ng-repeat and row selection click handler to each row
                 rowTemplate = rowTemplate.replace('<tr',
-                    '<tr ng-repeat="row in model | orderBy:SortState.sortExpression:SortState.sortDirectionToColumnMap[SortState.sortExpression] | filter:filterQueryModel" ' +
+                    '<tr ng-repeat="row in ' + TemplateStaticState.modelName + ' | orderBy:SortState.sortExpression:SortState.sortDirectionToColumnMap[SortState.sortExpression] | filter:filterQueryModel" ' +
                         selectedBackgroundColor + ngClick);
             }
 
             // wrap our rows in a table, and a container div.  the container div will manage the scrolling.
             rowTemplate = '<div class="angularTable' + headerUppercase + 'TableContainer"><table class="angularTable' + headerUppercase + 'Table">' + rowTemplate + '</table></div>';
 
+            $log.info('replacing with row template: ' + rowTemplate);
             // replace the original template with the manually replaced and transcluded version
             tElement.replaceWith(rowTemplate);
         };
@@ -365,6 +374,7 @@ angular.module('angular-table', [])
         self.selectedRowColor = '';
         self.evenRowColor = '';
         self.oddRowColor = '';
+        self.modelName = '';
 
         return self;
     })
