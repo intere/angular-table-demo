@@ -69,15 +69,13 @@ angular.module('angular-table', [])
         };
     }])
     .directive('row', ['ManualCompiler', 'ResizeHeightEvent', '$window', 'Debounce', 'TemplateStaticState', 'RowState', 'SortState',
-        'ScrollingContainerHeightState', 'JqLiteExtension', 'Instrumentation', 'ResizeWidthEvent', '$compile', '$log', '$timeout',
+        'ScrollingContainerHeightState', 'JqLiteExtension', 'Instrumentation', 'ResizeWidthEvent', '$compile',
         function(ManualCompiler, ResizeHeightEvent, $window, Debounce, TemplateStaticState, RowState, SortState, ScrollingContainerHeightState,
-            JqLiteExtension, Instrumentation, ResizeWidthEvent, $compile, $log, $timeout) {
+            JqLiteExtension, Instrumentation, ResizeWidthEvent, $compile) {
         return {
             // only support elements for now to simplify the manual transclusion and replace logic.
             restrict: 'E',
             controller: ['$scope', function($scope) {
-
-              $log.info("row controller function");
 
                 $scope.sortExpression = SortState.sortExpression;
 
@@ -115,8 +113,6 @@ angular.module('angular-table', [])
                 RowState.rowSelectedBackgroundColor = tAttrs.selectedColor;
 
                 ManualCompiler.compileRow(tElement, tAttrs, false);
-
-                $log.info('compiled the row directive');
 
                 // return a linking function
                 return function(scope, iElement) {
@@ -247,7 +243,7 @@ angular.module('angular-table', [])
         return self;
     }])
 
-    .service('ManualCompiler', ['TemplateStaticState', '$log', function(TemplateStaticState, $log) {
+    .service('ManualCompiler', ['TemplateStaticState', function(TemplateStaticState) {
         var self = this;
 
         self.compileRow = function(tElement, tAttrs, isHeader) {
@@ -331,7 +327,6 @@ angular.module('angular-table', [])
             // wrap our rows in a table, and a container div.  the container div will manage the scrolling.
             rowTemplate = '<div class="angularTable' + headerUppercase + 'TableContainer"><table class="angularTable' + headerUppercase + 'Table">' + rowTemplate + '</table></div>';
 
-            $log.info('replacing with row template: ' + rowTemplate);
             // replace the original template with the manually replaced and transcluded version
             tElement.replaceWith(rowTemplate);
         };
